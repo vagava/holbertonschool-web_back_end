@@ -2,29 +2,47 @@ const fs = require('fs');
 
 function countStudents(path) {
   return new Promise((resolve, reject) => {
-    fs.readFile(path, 'utf-8', (err, data) => {
+    fs.readFile(path, 'utf8', (err, data) => {
       if (err) {
-        return reject(Error('Cannot load the database'));
+        reject(Error('Cannot load the database'));
+        return;
       }
-      console.log(data);
-      const lines = data.trim().split('\n');
-      let count = 0;
-      const c = lines.slice(1).reduce((p, c) => {
-        count += 1;
-        const fields = c.split(',');
-        if (!p[fields[3]]) {
-          Object.assign(p, {
-            [fields[3]]: [],
-          });
+      const response = [];
+      let msg;
+
+      const content = data.toString().split('\n');
+
+      let students = content.filter((item) => item);
+
+      students = students.map((item) => item.split(','));
+
+      const NUMBER_OF_STUDENTS = students.length ? students.length - 1 : 0;
+      msg = `Number of students: ${NUMBER_OF_STUDENTS}`;
+      console.log(msg);
+
+      response.push(msg);
+
+      const fields = {};
+      for (const i in students) {
+        if (i !== 0) {
+          if (!fields[students[i][3]]) fields[students[i][3]] = [];
+
+          fields[students[i][3]].push(students[i][0]);
         }
-        p[fields[3]].push(fields[0]);
-        return p;
-      }, {});
-      console.log(`Number of students: ${count}`);
-      for (const key of Object.keys(c)) {
-        console.log(`Number of students in ${key}: ${c[key].length}. List: ${c[key].join(', ')}`);
       }
-      return resolve();
+
+      delete fields.field;
+
+      for (const key of Object.keys(fields)) {
+        msg = `Number of students in ${key}: ${
+          fields[key].length
+        }. List: ${fields[key].join(', ')}`;
+
+        console.log(msg);
+
+        response.push(msg);
+      }
+      resolve(response);
     });
   });
 }
