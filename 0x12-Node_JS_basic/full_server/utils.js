@@ -1,25 +1,34 @@
 const fs = require('fs');
-const util = require('util');
-
-const readFile = util.promisify(fs.readFile);
 
 function readDatabase(path) {
-  return readFile(path, 'utf8').then((data) => {
-    const student = {};
-
-    const datalines = data.split('\n');
-    const students = datalines.slice(1).map((line) => line.split(',')).filter((line) => line.length > 0 && line[0] !== '');
-
-    for (const line of students) {
-      if (!(line[3] in student)) {
-        student[line[3]] = [];
+  return new Promise((resolve, reject) => {
+    fs.readFile(path, 'utf8', (err, data) => {
+      if (err) {
+        reject(Error(err));
+        return;
       }
-      student[line[3]].push(line[0]);
-    }
-    return student;
-  }).catch(() => {
-    throw new Error('Cannot load the database');
+      const content = data.toString().split('\n');
+
+      let students = content.filter((item) => item);
+
+      students = students.map((item) => item.split(','));
+
+      const fields = {};
+      for (const i in students) {
+        if (i !== 0) {
+          if (!fields[students[i][3]]) fields[students[i][3]] = [];
+
+          fields[students[i][3]].push(students[i][0]);
+        }
+      }
+
+      delete fields.field;
+
+      resolve(fields);
+
+      //   return fields;
+    });
   });
 }
 
-module.exports = readDatabase;
+export default readDatabase;
